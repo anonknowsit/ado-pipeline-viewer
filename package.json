@@ -1,0 +1,129 @@
+{
+  "name": "azure-devops-pipeline-viewer",
+  "displayName": "Azure DevOps - Pipeline Viewer",
+  "publisher": "Anonknowsit",
+  "description": "A Visual Studio Code extension to view Azure DevOps pipelines for multiple projects within a single organization.",
+  "version": "0.0.1",
+  "icon": "azure-pipeline-viewer.jpeg",
+  "engines": {
+    "vscode": "^1.91.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "menus": {
+      "statusBar": [
+      {
+        "command": "azurePipelines.showRunningPipelines",
+        "when": "azurePipelines.hasRunningPipelines"
+      }
+    ],
+      "view/title": [
+        {
+          "command": "azurePipelines.refresh",
+          "when": "view == azurePipelinesAuth",
+          "group": "navigation"
+        },
+        {
+          "command": "azurePipelines.addProject",
+          "when": "view == azurePipelinesAuth",
+          "group": "1_modification"
+        },
+        {
+          "command": "azurePipelines.removeProject",
+          "when": "view == azurePipelinesAuth",
+          "group": "1_modification"
+        },
+        {
+          "command": "azurePipelines.setPAT",
+          "when": "view == azurePipelinesAuth",
+          "group": "2_configuration"
+        },
+        {
+          "command": "azurePipelines.setOrgUrl",
+          "when": "view == azurePipelinesAuth",
+          "group": "2_configuration"
+        },
+        {
+          "command": "azurePipelines.resetSecrets",
+          "when": "view == azurePipelinesAuth",
+          "group": "3_reset"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "azure-pipelines",
+          "title": "Azure DevOps - Pipeline Viewer",
+          "icon": "azure-pipeline.svg"
+        }
+      ]
+    },
+   "views": {
+        "azure-pipelines": [
+          {
+            "id": "azurePipelinesAuth",
+            "name": "Authentication"
+          },
+            {
+                "id": "azurePipelines",
+                "name": "Pipelines"
+            }
+        ]
+    },
+    "commands": [
+        {
+            "command": "azurePipelines.refresh",
+            "title": "Refresh",
+            "icon": "$(refresh)"
+        },
+        {
+            "command": "azurePipelines.setPAT",
+            "title": "Set Azure DevOps PAT"
+        },
+        {
+            "command": "azurePipelines.setOrgUrl",
+            "title": "Set Azure DevOps Organization URL"
+        },
+        {
+          "command": "azurePipelines.addProject",
+          "title": "Add Azure DevOps Project"
+        },
+        {
+          "command": "azurePipelines.removeProject",
+          "title": "Remove Azure DevOps Project"
+        },
+        {
+          "command": "azurePipelines.resetSecrets",
+          "title": "Reset Azure DevOps Secrets"
+        }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.7",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.91.0",
+    "@typescript-eslint/eslint-plugin": "^7.14.1",
+    "@typescript-eslint/parser": "^7.11.0",
+    "@vscode/test-cli": "^0.0.9",
+    "@vscode/test-electron": "^2.4.0",
+    "eslint": "^8.57.0",
+    "mocha": "^8.3.2",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "azure-devops-node-api": "^14.0.1"
+  }
+}
