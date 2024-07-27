@@ -10,6 +10,10 @@ Azure DevOps - Pipeline Viewer is a Visual Studio Code extension that allows you
 
 - View Azure DevOps pipelines for multiple projects within a single organization.
 - Display pipeline status, build number, and project name.
+  - Indicators:
+    - "-" - Canceled/Unknown
+    - "X" - Failed
+    - "🗸" - Succeeded
 - Auto-refresh to keep pipeline status up-to-date.
 - Visual separators with project names and icons for better organization.
 - Set and manage Azure DevOps Personal Access Token (PAT), organization URL, and project names.
@@ -45,6 +49,11 @@ There are two ways to set up and use the Azure DevOps - Pipeline Viewer:
 4. After configuring, switch to the "Pipelines" view to see your pipelines.
 
 The extension will automatically refresh the pipeline view every 15 seconds to keep the status up-to-date. You can also manually refresh using the refresh button in the view.
+
+<br>
+
+![Alt Text](https://raw.githubusercontent.com/anonknowsit/ado-pipeline-viewer
+/main/Animation.gif)
 
 ## Configuration
 
