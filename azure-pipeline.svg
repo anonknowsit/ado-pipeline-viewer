@@ -1,15 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <defs>
-    <radialGradient id="eyeGradient" cx="50%" cy="50%" r="50%" fx="25%" fy="25%">
-      <stop offset="0%" style="stop-color:white;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#e0e0e0;stop-opacity:1" />
-    </radialGradient>
-  </defs>
-  <rect width="100" height="100" fill="#404040"/>
-  <circle cx="50" cy="50" r="45" stroke="white" stroke-width="2" fill="none"/>
-  <path d="M20,50 Q50,20 80,50 Q50,80 20,50 Z" fill="url(#eyeGradient)" stroke="white" stroke-width="2"/>
-  <circle cx="50" cy="50" r="15" fill="#333"/>
-  <circle cx="50" cy="50" r="14" fill="#0a0a0a"/>
-  <circle cx="45" cy="45" r="6" fill="#ffffff" opacity="0.7"/>
-  <ellipse cx="58" cy="52" rx="3" ry="4" fill="#ffffff" opacity="0.5" transform="rotate(-20 58 52)"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="12" r="10" stroke-width="0.7"/>
+  <path d="M5,12 Q12,5 19,12 Q12,19 5,12 Z " stroke-width="0.7"/>
+  <circle cx="12" cy="12" r="3" stroke-width="0.7"/>
 </svg>
