@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.4] - 2024-07-29
 
+### Upated
+
+- Adjusted README.md file
+
+## [0.0.4] - 2024-07-29
+
 ### Added
 
 - Implemented a progress indicator when fetching pipeline logs.
