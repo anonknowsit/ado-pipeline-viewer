@@ -7,7 +7,7 @@
     "url": "https://github.com/anonknowsit/ado-pipeline-viewer.git"
   },
   "description": "A Visual Studio Code extension to view Azure DevOps pipelines for multiple projects within a single organization.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "icon": "azure-pipeline-viewer.jpeg",
   "engines": {
     "vscode": "^1.91.0"

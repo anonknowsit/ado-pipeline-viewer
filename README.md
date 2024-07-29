@@ -55,6 +55,10 @@ The extension will automatically refresh the pipeline view every 15 seconds to k
 
 ![Alt Text](https://raw.githubusercontent.com/anonknowsit/ado-pipeline-viewer/master/Animation.gif)
 
+<br>
+
+![Alt Text](https://raw.githubusercontent.com/anonknowsit/ado-pipeline-viewer/master/AnimationLogs.gif)
+
 ## Configuration
 
 ### Commands
