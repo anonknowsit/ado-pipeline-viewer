@@ -18,6 +18,9 @@ Azure DevOps - Pipeline Viewer is a Visual Studio Code extension that allows you
 - Auto-refresh to keep pipeline status up-to-date.
 - Visual separators with project names and icons for better organization.
 - Set and manage Azure DevOps Personal Access Token (PAT), organization URL, and project names.
+- View detailed logs for each pipeline run.
+- Highlight custom tasks in the log output for better visibility.
+- Progress indicator when fetching pipeline logs.
 
 ## Installation
 
@@ -55,6 +58,14 @@ The extension will automatically refresh the pipeline view every 15 seconds to k
 
 ![Alt Text](https://raw.githubusercontent.com/anonknowsit/ado-pipeline-viewer/master/Animation.gif)
 
+### Viewing Pipeline Logs
+
+To view logs for a pipeline run:
+
+1. Click on a pipeline in the "Pipelines" view.
+2. The logs will open in the Output panel, showing detailed information about the pipeline run.
+3. Custom tasks in the logs are highlighted for easy identification.
+
 <br>
 
 ![Alt Text](https://raw.githubusercontent.com/anonknowsit/ado-pipeline-viewer/master/AnimationLogs.gif)
@@ -79,17 +90,6 @@ The extension will automatically refresh the pipeline view every 15 seconds to k
 
 The extension automatically refreshes the pipeline view every 15 seconds to keep the status up-to-date.
 
-## Development
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) (version 14 or higher)
-- [npm](https://www.npmjs.com/)
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request on GitHub.
-
 ## Acknowledgements
 
 - [Azure DevOps Node API](https://github.com/microsoft/azure-devops-node-api) for interacting with Azure DevOps.
@@ -105,4 +105,4 @@ If you encounter any issues or have suggestions for improvements, please open an
 
 ### About the Author
 
-Created with ❤️ by [Anonknowsit](https://github.com/anonknowsit).
+Created with ❤️ by [Anonknowsit](https://github.com/anonknowsit)
