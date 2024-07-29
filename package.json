@@ -80,6 +80,10 @@
     },
     "commands": [
       {
+        "command": "azurePipelines.openLogs",
+        "title": "Open Pipeline Logs"
+      },
+      {
         "command": "azurePipelines.refresh",
         "title": "Refresh",
         "icon": "$(refresh)"

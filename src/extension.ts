@@ -12,6 +12,11 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.window.registerTreeDataProvider("azurePipelinesAuth", authProvider);
   vscode.window.registerTreeDataProvider("azurePipelines", pipelinesProvider);
 
+  vscode.commands.registerCommand(
+    "azurePipelines.openLogs",
+    (pipeline: Pipeline) => pipelinesProvider.openLogs(pipeline)
+  );
+
   // Start auto-refresh immediately
   pipelinesProvider.startAutoRefresh();
 
@@ -274,7 +279,9 @@ class PipelinesProvider
           undefined
         );
 
-        allBuilds = allBuilds.concat(builds);
+        allBuilds = allBuilds.concat(
+          builds.map((build) => ({ ...build, projectName }))
+        );
       }
 
       // Sort all builds by finish time in descending order and take the latest 20
@@ -284,7 +291,7 @@ class PipelinesProvider
             (b.finishTime ? new Date(b.finishTime).getTime() : 0) -
             (a.finishTime ? new Date(a.finishTime).getTime() : 0)
         )
-        .slice(0, 20);
+        .slice(0, 20); // Change from 10 to 20
 
       let result: (Pipeline | SeparatorItem)[] = [];
 
@@ -296,7 +303,8 @@ class PipelinesProvider
             build.status === BuildStatus.InProgress,
             vscode.TreeItemCollapsibleState.None,
             build.buildNumber || "Unknown",
-            build.project?.name || "Unknown"
+            build.projectName || "Unknown",
+            build.id // Pass buildId
           )
         );
       }
@@ -339,6 +347,119 @@ class PipelinesProvider
       default:
         return "Unknown";
     }
+  }
+
+  async openLogs(pipeline: Pipeline) {
+    const pat = await this.getPAT();
+    const orgUrl = await this.getOrgUrl();
+
+    if (!pat || !orgUrl) {
+      vscode.window.showErrorMessage("PAT or Organization URL is not set");
+      return;
+    }
+
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `Fetching logs for ${pipeline.label} (Build ${pipeline.buildNumber})`,
+        cancellable: false,
+      },
+      async (progress) => {
+        try {
+          const authHandler = azdev.getPersonalAccessTokenHandler(pat);
+          const connection = new azdev.WebApi(orgUrl, authHandler);
+          const buildApi = await connection.getBuildApi();
+
+          const outputChannel = vscode.window.createOutputChannel(
+            `Pipeline Logs: ${pipeline.label} (Build ${pipeline.buildNumber})`
+          );
+          outputChannel.show(true);
+
+          outputChannel.appendLine(
+            `Fetching logs for pipeline: ${pipeline.label} (Build ${pipeline.buildNumber})`
+          );
+          outputChannel.appendLine("---");
+
+          progress.report({ increment: 20, message: "Fetching timeline..." });
+
+          const timeline = await buildApi.getBuildTimeline(
+            pipeline.projectName,
+            pipeline.buildId
+          );
+          const tasks =
+            timeline.records?.filter((record) => record.type === "Task") || [];
+
+          progress.report({ increment: 30, message: "Fetching logs..." });
+
+          const logs = await buildApi.getBuildLogs(
+            pipeline.projectName,
+            pipeline.buildId
+          );
+
+          progress.report({ increment: 30, message: "Processing logs..." });
+
+          for (let i = 0; i < logs.length; i++) {
+            const log = logs[i];
+            if (log.id !== undefined) {
+              const task = tasks[i] || { name: `Unknown Task ${i + 1}` };
+              const isCustomTask = !task.task?.name?.startsWith("__");
+              const taskName = isCustomTask
+                ? `>>> CUSTOM TASK: ${task.name} <<<`
+                : task.name;
+              outputChannel.appendLine(`\n--- ${taskName} (Log ${log.id}) ---`);
+              const logContent = await buildApi.getBuildLogLines(
+                pipeline.projectName,
+                pipeline.buildId,
+                log.id
+              );
+
+              // Process and format log content
+              const formattedLogContent = logContent
+                .map((line) => {
+                  // Extract timestamp and message
+                  const match = line.match(
+                    /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}).\d+Z\s(.*)$/
+                  );
+                  if (match) {
+                    const [, timestamp, message] = match;
+                    return `${timestamp} ${message}`;
+                  }
+                  return line;
+                })
+                .join("\n");
+
+              outputChannel.appendLine(formattedLogContent);
+              outputChannel.appendLine("---");
+            }
+            progress.report({
+              increment: 20 / logs.length,
+              message: `Processing log ${i + 1} of ${logs.length}...`,
+            });
+          }
+
+          outputChannel.appendLine("Log fetching completed.");
+          progress.report({ increment: 20, message: "Completed" });
+        } catch (error) {
+          vscode.window.showErrorMessage(
+            `Error fetching logs: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          );
+        }
+      }
+    );
+  }
+
+  private extractCustomTaskNames(yamlContent: string): string[] {
+    const taskLines = yamlContent
+      .split("\n")
+      .filter((line) => line.trim().startsWith("- task:"));
+    return taskLines
+      .map((line) => {
+        const match = line.match(/- task:\s*(.+)/);
+        return match ? match[1].trim() : "";
+      })
+      .filter(Boolean);
   }
 
   private updateActivityBarIcon(runningPipelines: Pipeline[]) {
@@ -411,12 +532,18 @@ class Pipeline extends vscode.TreeItem {
     public readonly isRunning: boolean,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     public readonly buildNumber: string,
-    public readonly projectName: string
+    public readonly projectName: string,
+    public readonly buildId: number // Add buildId
   ) {
     super(`${label} (${buildNumber}) - ${projectName}`, collapsibleState);
     this.tooltip = `${label} (${buildNumber}) - ${projectName} - ${status}`;
     this.description = `${buildNumber} - ${status}`;
     this.iconPath = this.getIconPath();
+    this.command = {
+      command: "azurePipelines.openLogs",
+      title: "Open Logs",
+      arguments: [this],
+    };
   }
 
   private getIconPath(): vscode.ThemeIcon {
