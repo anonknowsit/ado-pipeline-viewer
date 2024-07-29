@@ -253,12 +253,9 @@ class PipelinesProvider
       const connection = new azdev.WebApi(orgUrl, authHandler);
       const buildApi = await connection.getBuildApi();
 
-      let result: (Pipeline | SeparatorItem)[] = [];
-      for (const projectName of projects) {
-        // Add a separator before each project, except the first one
-        result.push(new SeparatorItem(projectName));
+      let allBuilds: any[] = [];
 
-        // Needs to be updated!!!
+      for (const projectName of projects) {
         const builds = await buildApi.getBuilds(
           projectName,
           undefined,
@@ -274,26 +271,41 @@ class PipelinesProvider
           undefined,
           undefined,
           undefined,
-          15
+          undefined
         );
-        const projectPipelines = builds.map(
-          (build) =>
-            new Pipeline(
-              build.definition?.name || "Unknown",
-              this.getBuildResultString(build.result),
-              build.status === BuildStatus.InProgress,
-              vscode.TreeItemCollapsibleState.None,
-              build.buildNumber || "Unknown",
-              projectName
-            )
+
+        allBuilds = allBuilds.concat(builds);
+      }
+
+      // Sort all builds by finish time in descending order and take the latest 20
+      const latestBuilds = allBuilds
+        .sort(
+          (a, b) =>
+            (b.finishTime ? new Date(b.finishTime).getTime() : 0) -
+            (a.finishTime ? new Date(a.finishTime).getTime() : 0)
+        )
+        .slice(0, 20);
+
+      let result: (Pipeline | SeparatorItem)[] = [];
+
+      for (const build of latestBuilds) {
+        result.push(
+          new Pipeline(
+            build.definition?.name || "Unknown",
+            this.getBuildResultString(build.result),
+            build.status === BuildStatus.InProgress,
+            vscode.TreeItemCollapsibleState.None,
+            build.buildNumber || "Unknown",
+            build.project?.name || "Unknown"
+          )
         );
-        result.push(...projectPipelines);
       }
 
       this.previousRunningPipelines = this.runningPipelines;
       this.runningPipelines = result.filter(
         (item) => item instanceof Pipeline && item.isRunning
       ).length;
+
       this.updateActivityBarIcon(
         result.filter(
           (item) => item instanceof Pipeline && item.isRunning
