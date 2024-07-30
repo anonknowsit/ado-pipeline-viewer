@@ -5,13 +5,28 @@ All notable changes to the "Azure DevOps - Pipeline Viewer" extension will be do
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.5] - 2024-07-30
+
+### Added
+
+- Implemented a spinning sync icon for running pipelines in the tree view.
+- Added "(Running)" text to the description of running pipelines for additional clarity.
+
+### Changed
+
+- Modified the pipeline view to show the latest 15 pipelines from each project, regardless of their status.
+- Updated the sorting of pipelines to be based on finish time in descending order.
+- Improved error handling when opening logs during ongoing refreshes.
+
+### Fixed
+
+- Resolved issues with opening logs while the pipeline view is refreshing.
+
 ## [0.0.4] - 2024-07-29
 
-### Upated
+### Updated
 
 - Adjusted README.md file
-
-## [0.0.4] - 2024-07-29
 
 ### Added
 
@@ -64,4 +79,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-- Implemented secure storage for Personal Access Token using VSCode Secret Storage API.
+- Implemented secure storage for Personal Access Token using VSCode Secret Storage API
