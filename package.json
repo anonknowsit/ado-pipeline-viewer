@@ -15,6 +15,7 @@
   "categories": [
     "Other"
   ],
+  "license": "MIT",
   "main": "./dist/extension.js",
   "contributes": {
     "menus": {
