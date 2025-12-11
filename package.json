@@ -1,6 +1,6 @@
 {
-  "name": "azure-devops-pipeline-viewer",
-  "displayName": "Azure DevOps - Pipeline Viewer",
+  "name": "ado-pipeline-viewer",
+  "displayName": "Azure DevOps - Pipeline Logs Viewer",
   "publisher": "akit",
   "repository": {
     "type": "git",
@@ -8,7 +8,7 @@
   },
   "description": "A Visual Studio Code extension to view Azure DevOps pipelines for multiple projects within a single organization.",
   "version": "0.0.6",
-  "icon": "azure-pipeline-viewer.jpeg",
+  "icon": "seeing_eye.jpeg",
   "engines": {
     "vscode": "^1.91.0"
   },
