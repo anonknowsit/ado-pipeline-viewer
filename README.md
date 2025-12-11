@@ -1,10 +1,10 @@
-# Azure DevOps - Pipeline Viewer
+# Azure DevOps - Pipeline Logs Viewer
 
 <p align=center>
 <img src="https://raw.githubusercontent.com/anonknowsit/ado-pipeline-viewer/master/seeing_eye.jpeg"  width="250" height="250"> 
 </p>
 
-Azure DevOps - Pipeline Viewer is a Visual Studio Code extension that allows you to view Azure DevOps pipelines directly within the VSCode environment. The extension supports multiple projects within a single organization and provides a clear and organized view of your pipelines.
+Azure DevOps - Pipeline Logs Viewer is a Visual Studio Code extension that allows you to view Azure DevOps pipelines directly within the VSCode environment. The extension supports multiple projects within a single organization and provides a clear and organized view of your pipelines.
 
 ## Features
 
@@ -26,7 +26,7 @@ Azure DevOps - Pipeline Viewer is a Visual Studio Code extension that allows you
 
 1. Install [Visual Studio Code](https://code.visualstudio.com/).
 2. Open the Extensions view by clicking on the Extensions icon in the Sidebar or pressing `Ctrl+Shift+X`.
-3. Search for "Azure DevOps - Pipeline Viewer" and click Install.
+3. Search for "Azure DevOps - Pipeline Logs Viewer" and click Install.
 
 ## Usage
 
