@@ -52,7 +52,7 @@ There are two ways to set up and use the Azure DevOps - Pipeline Viewer:
    - "Reset Azure DevOps Secrets" to clear all settings.
 4. After configuring, switch to the "Pipelines" view to see your pipelines.
 
-The extension will automatically refresh the pipeline view every 15 seconds to keep the status up-to-date. You can also manually refresh using the refresh button in the view.
+The extension will automatically refresh the pipeline view every 60 seconds to keep the status up-to-date. You can also manually refresh using the refresh button in the view.
 
 <br>
 

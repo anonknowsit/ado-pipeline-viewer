@@ -225,7 +225,7 @@ class PipelinesProvider
     if (this.interval) {
       clearInterval(this.interval);
     }
-    this.interval = setInterval(() => this.refreshData(), 60000); // Refresh every &0 seconds
+    this.interval = setInterval(() => this.refreshData(), 60000); // Refresh every 60 seconds
   }
 
   private async refreshData(): Promise<void> {
@@ -369,15 +369,22 @@ class PipelinesProvider
 
           progress.report({ increment: 20, message: "Fetching timeline..." });
 
+          // Fetch the timeline for the build
           const timeline = await buildApi.getBuildTimeline(
             pipeline.projectName,
             pipeline.buildId
           );
+
+          console.log("Timeline Records:", timeline.records);
+
+          // Filter tasks from the timeline
           const tasks =
             timeline.records?.filter((record) => record.type === "Task") || [];
+          console.log("Filtered Tasks:", tasks);
 
           progress.report({ increment: 30, message: "Fetching logs..." });
 
+          // Fetch logs for the build
           const logs = await buildApi.getBuildLogs(
             pipeline.projectName,
             pipeline.buildId
@@ -388,12 +395,13 @@ class PipelinesProvider
           for (let i = 0; i < logs.length; i++) {
             const log = logs[i];
             if (log.id !== undefined) {
-              const task = tasks[i] || { name: `Unknown Task ${i + 1}` };
-              const isCustomTask = !task.task?.name?.startsWith("__");
-              const taskName = isCustomTask
-                ? `>>> CUSTOM TASK: ${task.name} <<<`
-                : task.name;
-              outputChannel.appendLine(`\n--- ${taskName} (Log ${log.id}) ---`);
+              // Get the corresponding task
+              const task = tasks.find((t) => t.log?.id === log.id);
+
+              // Use the name property as the task name
+              const taskName = task?.name || `Log ${log.id}`;
+
+              outputChannel.appendLine(`\n--- ${taskName} ---`);
               const logContent = await buildApi.getBuildLogLines(
                 pipeline.projectName,
                 pipeline.buildId,
@@ -446,17 +454,13 @@ class PipelinesProvider
       return;
     }
 
-    // Create a new Webview panel
     const panel = vscode.window.createWebviewPanel(
-      "pipelineLogs", // Internal identifier
-      `Logs: ${pipeline.label}`, // Title of the Webview
-      vscode.ViewColumn.One, // Show in the first column
-      {
-        enableScripts: true, // Allow JavaScript in the Webview
-      }
+      "pipelineLogs",
+      `Logs: ${pipeline.label}`,
+      vscode.ViewColumn.One,
+      { enableScripts: true }
     );
 
-    // Set initial content for the Webview
     panel.webview.html = this.getWebviewContent("Loading logs...");
 
     try {
@@ -464,7 +468,20 @@ class PipelinesProvider
       const connection = new azdev.WebApi(orgUrl, authHandler);
       const buildApi = await connection.getBuildApi();
 
-      // Fetch logs for the pipeline
+      // Fetch the timeline for the build
+      const timeline = await buildApi.getBuildTimeline(
+        pipeline.projectName,
+        pipeline.buildId
+      );
+
+      console.log("Timeline Records:", timeline.records);
+
+      // Filter tasks from the timeline
+      const tasks =
+        timeline.records?.filter((record) => record.type === "Task") || [];
+      console.log("Filtered Tasks:", tasks);
+
+      // Fetch logs for the build
       const logs = await buildApi.getBuildLogs(
         pipeline.projectName,
         pipeline.buildId
@@ -472,17 +489,30 @@ class PipelinesProvider
 
       let logContent = "";
 
-      // Process each log
       for (const log of logs) {
         if (log.id !== undefined) {
+          // Find the corresponding task for the log
+          const task = tasks.find((t) => t.log?.id === log.id);
+
+          // Use the task name or fallback to "Log X"
+          const taskName = task?.name || `Log ${log.id}`;
+          console.log(`Task Name for Log ${log.id}:`, taskName);
+
+          // Fetch the log lines
           const logLines = await buildApi.getBuildLogLines(
             pipeline.projectName,
             pipeline.buildId,
             log.id
           );
-          logContent += `<h3>Log ${log.id}</h3><pre>${logLines.join(
-            "\n"
-          )}</pre><hr>`;
+
+          // Add the task name and log content to the Webview
+          logContent += `
+          <div class="task">
+            <div class="task-header">${taskName}</div>
+            <div class="task-content">${logLines.join("\n")}</div>
+          </div>
+          <hr>
+        `;
         }
       }
 
@@ -500,8 +530,8 @@ class PipelinesProvider
     }
   }
 
-private getWebviewContent(logs: string): string {
-  return `
+  private getWebviewContent(logs: string): string {
+    return `
     <!DOCTYPE html>
     <html lang="en">
     <head>
