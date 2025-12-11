@@ -73,6 +73,8 @@ To view logs for a pipeline run:
 
 ![Alt Text](https://raw.githubusercontent.com/anonknowsit/ado-pipeline-viewer/master/AnimationLogs.gif)
 
+![Alt Text](https://raw.githubusercontent.com/anonknowsit/ado-pipeline-viewer/master/AnimationWebViewLogs.gif)
+
 ## Configuration
 
 ### Commands
