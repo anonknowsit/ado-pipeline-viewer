@@ -1,7 +1,7 @@
 # Azure DevOps - Pipeline Viewer
 
 <p align=center>
-<img src="azure-pipeline-viewer.jpeg"  width="250" height="250"> 
+<img src="seeing_eye.jpeg"  width="250" height="250"> 
 </p>
 
 Azure DevOps - Pipeline Viewer is a Visual Studio Code extension that allows you to view Azure DevOps pipelines directly within the VSCode environment. The extension supports multiple projects within a single organization and provides a clear and organized view of your pipelines.
