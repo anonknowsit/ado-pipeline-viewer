@@ -55,7 +55,14 @@
           "when": "view == azurePipelinesAuth",
           "group": "3_reset"
         }
-      ]
+      ],
+      "view/item/context": [
+      {
+        "command": "azurePipelines.viewLogsInWebview",
+        "when": "view == azurePipelines && viewItem == pipeline",
+        "group": "inline"
+      }
+    ]
     },
     "viewsContainers": {
       "activitybar": [
@@ -107,6 +114,10 @@
       {
         "command": "azurePipelines.resetSecrets",
         "title": "Reset Azure DevOps Secrets"
+      },
+      {
+        "command": "azurePipelines.viewLogsInWebview",
+        "title": "View Pipeline Logs in Webview"
       }
     ]
   },
@@ -129,7 +140,7 @@
     "@vscode/test-cli": "^0.0.9",
     "@vscode/test-electron": "^2.4.0",
     "eslint": "^8.57.0",
-    "mocha": "^8.3.2",
+    "mocha": "^11.7.5",
     "ts-loader": "^9.5.1",
     "typescript": "^5.4.5",
     "webpack": "^5.93.0",

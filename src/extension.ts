@@ -16,6 +16,10 @@ export function activate(context: vscode.ExtensionContext) {
     "azurePipelines.openLogs",
     (pipeline: Pipeline) => pipelinesProvider.openLogs(pipeline)
   );
+  vscode.commands.registerCommand(
+    "azurePipelines.viewLogsInWebview",
+    (pipeline: Pipeline) => pipelinesProvider.openLogsInWebview(pipeline)
+  );
 
   // Start auto-refresh immediately
   pipelinesProvider.startAutoRefresh();
@@ -36,13 +40,8 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("azurePipelines.removeProject", () =>
       authProvider.removeProject()
     ),
-    vscode.commands.registerCommand(
-      "azurePipelines.resetSecrets",
-      () => authProvider.resetSecrets(),
-      vscode.commands.registerCommand(
-        "azurePipelines.openLogs",
-        (pipeline: Pipeline) => pipelinesProvider.openLogs(pipeline)
-      )
+    vscode.commands.registerCommand("azurePipelines.resetSecrets", () =>
+      authProvider.resetSecrets()
     )
   );
 }
@@ -195,329 +194,6 @@ class AuthenticationProvider
     return this.context.globalState.get("azureDevOpsProjects", []);
   }
 }
-
-/* class PipelinesProvider
-  implements vscode.TreeDataProvider<Pipeline | SeparatorItem>
-{
-  private _onDidChangeTreeData: vscode.EventEmitter<
-    Pipeline | SeparatorItem | null
-  > = new vscode.EventEmitter<Pipeline | SeparatorItem | null>();
-  readonly onDidChangeTreeData: vscode.Event<Pipeline | SeparatorItem | null> =
-    this._onDidChangeTreeData.event;
-  private interval: NodeJS.Timeout | undefined;
-  private runningPipelines: number = 0;
-  private previousRunningPipelines: number = 0;
-  private statusBarItem: vscode.StatusBarItem;
-
-  constructor(private context: vscode.ExtensionContext) {
-    this.statusBarItem = vscode.window.createStatusBarItem(
-      vscode.StatusBarAlignment.Left,
-      100
-    );
-    this.statusBarItem.command = "azurePipelines.showRunningPipelines";
-    context.subscriptions.push(this.statusBarItem);
-  }
-
-  refresh(): void {
-    this._onDidChangeTreeData.fire(null);
-  }
-
-  startAutoRefresh(): void {
-    if (this.interval) {
-      clearInterval(this.interval);
-    }
-    this.interval = setInterval(() => this.refreshData(), 60000); // Refresh every 60 seconds
-  }
-
-  private async refreshData(): Promise<void> {
-    await this.fetchPipelinesWithSeparators();
-    this.refresh();
-  }
-
-  getTreeItem(element: Pipeline | SeparatorItem): vscode.TreeItem {
-    return element;
-  }
-
-  async getChildren(
-    element?: Pipeline | SeparatorItem
-  ): Promise<(Pipeline | SeparatorItem)[]> {
-    if (!element) {
-      return this.fetchPipelinesWithSeparators();
-    }
-    return [];
-  }
-
-  private async fetchPipelinesWithSeparators(): Promise<
-    (Pipeline | SeparatorItem)[]
-  > {
-    const pat = await this.getPAT();
-    const orgUrl = await this.getOrgUrl();
-    const projects = await this.getProjects();
-
-    if (!pat || !orgUrl || projects.length === 0) {
-      return [];
-    }
-
-    try {
-      const authHandler = azdev.getPersonalAccessTokenHandler(pat);
-      const connection = new azdev.WebApi(orgUrl, authHandler);
-      const buildApi = await connection.getBuildApi();
-
-      let result: (Pipeline | SeparatorItem)[] = [];
-
-      for (const projectName of projects) {
-        result.push(new SeparatorItem(projectName));
-
-        const builds = await buildApi.getBuilds(
-          projectName,
-          undefined, // definitions
-          undefined, // queues
-          undefined, // buildNumber
-          undefined, // minTime
-          undefined, // maxTime
-          undefined, // requestedFor
-          undefined, // reasonFilter
-          undefined, // statusFilter
-          undefined, // resultFilter
-          undefined, // tagFilters
-          undefined, // properties
-          undefined, // top
-          undefined, // continuationToken
-          undefined, // maxBuildsPerDefinition
-          undefined, // deletedFilter
-          undefined, // queryOrder
-          undefined // branchName
-        );
-
-        const sortedBuilds = builds.sort(
-          (a, b) =>
-            (b.finishTime ? new Date(b.finishTime).getTime() : Date.now()) -
-            (a.finishTime ? new Date(a.finishTime).getTime() : Date.now())
-        );
-
-        const limitedBuilds = sortedBuilds.slice(0, 15);
-
-        const projectPipelines = limitedBuilds
-          .filter((build) => build.id !== undefined)
-          .map(
-            (build) =>
-              new Pipeline(
-                build.definition?.name || "Unknown",
-                this.getBuildResultString(build.result),
-                build.status === BuildStatus.InProgress,
-                vscode.TreeItemCollapsibleState.None,
-                build.buildNumber || "Unknown",
-                projectName,
-                build.id!
-              )
-          );
-
-        result.push(...projectPipelines);
-      }
-
-      this.previousRunningPipelines = this.runningPipelines;
-      this.runningPipelines = result.filter(
-        (item) => item instanceof Pipeline && item.isRunning
-      ).length;
-
-      this.updateActivityBarIcon(
-        result.filter(
-          (item) => item instanceof Pipeline && item.isRunning
-        ) as Pipeline[]
-      );
-
-      return result;
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        `Error fetching pipelines: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
-      return [];
-    }
-  }
-
-  private getBuildResultString(result: BuildResult | undefined): string {
-    if (result === undefined) {
-      return "Unknown";
-    }
-    switch (result) {
-      case BuildResult.Succeeded:
-        return "Succeeded";
-      case BuildResult.PartiallySucceeded:
-        return "Partially Succeeded";
-      case BuildResult.Failed:
-        return "Failed";
-      case BuildResult.Canceled:
-        return "Canceled";
-      default:
-        return "Unknown";
-    }
-  }
-
-  async openLogs(pipeline: Pipeline) {
-    const pat = await this.getPAT();
-    const orgUrl = await this.getOrgUrl();
-
-    if (!pat || !orgUrl) {
-      vscode.window.showErrorMessage("PAT or Organization URL is not set");
-      return;
-    }
-
-    await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: `Fetching logs for ${pipeline.label} (Build ${pipeline.buildNumber})`,
-        cancellable: false,
-      },
-      async (progress) => {
-        try {
-          const authHandler = azdev.getPersonalAccessTokenHandler(pat);
-          const connection = new azdev.WebApi(orgUrl, authHandler);
-          const buildApi = await connection.getBuildApi();
-
-          const outputChannel = vscode.window.createOutputChannel(
-            `Pipeline Logs: ${pipeline.label} (Build ${pipeline.buildNumber})`
-          );
-          outputChannel.show(true);
-
-          outputChannel.appendLine(
-            `Fetching logs for pipeline: ${pipeline.label} (Build ${pipeline.buildNumber})`
-          );
-          outputChannel.appendLine("---");
-
-          progress.report({ increment: 20, message: "Fetching timeline..." });
-
-          const timeline = await buildApi.getBuildTimeline(
-            pipeline.projectName,
-            pipeline.buildId
-          );
-          const tasks =
-            timeline.records?.filter((record) => record.type === "Task") || [];
-
-          progress.report({ increment: 30, message: "Fetching logs..." });
-
-          const logs = await buildApi.getBuildLogs(
-            pipeline.projectName,
-            pipeline.buildId
-          );
-
-          progress.report({ increment: 30, message: "Processing logs..." });
-
-          for (let i = 0; i < logs.length; i++) {
-            const log = logs[i];
-            if (log.id !== undefined) {
-              const task = tasks[i] || { name: `Unknown Task ${i + 1}` };
-              const isCustomTask = !task.task?.name?.startsWith("__");
-              const taskName = isCustomTask
-                ? `>>> CUSTOM TASK: ${task.name} <<<`
-                : task.name;
-              outputChannel.appendLine(`\n--- ${taskName} (Log ${log.id}) ---`);
-              const logContent = await buildApi.getBuildLogLines(
-                pipeline.projectName,
-                pipeline.buildId,
-                log.id
-              );
-
-              // Process and format log content
-              const formattedLogContent = logContent
-                .map((line) => {
-                  // Extract timestamp and message
-                  const match = line.match(
-                    /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}).\d+Z\s(.*)$/
-                  );
-                  if (match) {
-                    const [, timestamp, message] = match;
-                    return `${timestamp} ${message}`;
-                  }
-                  return line;
-                })
-                .join("\n");
-
-              outputChannel.appendLine(formattedLogContent);
-              outputChannel.appendLine("---");
-            }
-            progress.report({
-              increment: 20 / logs.length,
-              message: `Processing log ${i + 1} of ${logs.length}...`,
-            });
-          }
-
-          outputChannel.appendLine("Log fetching completed.");
-          progress.report({ increment: 20, message: "Completed" });
-        } catch (error) {
-          vscode.window.showErrorMessage(
-            `Error fetching logs: ${
-              error instanceof Error ? error.message : String(error)
-            }`
-          );
-        }
-      }
-    );
-  }
-
-  private updateActivityBarIcon(runningPipelines: Pipeline[]) {
-    if (this.runningPipelines > 0) {
-      vscode.commands.executeCommand(
-        "setContext",
-        "azurePipelines.hasRunningPipelines",
-        true
-      );
-      vscode.commands.executeCommand(
-        "setContext",
-        "azurePipelines.runningPipelinesCount",
-        this.runningPipelines
-      );
-      if (this.runningPipelines > this.previousRunningPipelines) {
-        // New pipeline started
-        const pipelineInfo = runningPipelines
-          .map((p) => `${p.label} (${p.buildNumber}) - ${p.projectName}`)
-          .join(", ");
-        vscode.window.showInformationMessage(
-          `Total running pipelines: ${this.runningPipelines}. Running: ${pipelineInfo}`
-        );
-      }
-    } else {
-      vscode.commands.executeCommand(
-        "setContext",
-        "azurePipelines.hasRunningPipelines",
-        false
-      );
-      vscode.commands.executeCommand(
-        "setContext",
-        "azurePipelines.runningPipelinesCount",
-        0
-      );
-    }
-
-    // Update status bar
-    this.updateStatusBar(runningPipelines);
-  }
-
-  private updateStatusBar(runningPipelines: Pipeline[]) {
-    if (this.runningPipelines > 0) {
-      const pipelineInfo = runningPipelines
-        .map((p) => `${p.label} (${p.buildNumber}) - ${p.projectName}`)
-        .join(", ");
-      this.statusBarItem.text = `$(sync~spin) ${this.runningPipelines} pipeline(s) running: ${pipelineInfo}`;
-      this.statusBarItem.show();
-    } else {
-      this.statusBarItem.hide();
-    }
-  }
-
-  async getPAT(): Promise<string | undefined> {
-    return this.context.secrets.get("azureDevOpsPAT");
-  }
-
-  async getOrgUrl(): Promise<string | undefined> {
-    return this.context.globalState.get("azureDevOpsOrgUrl");
-  }
-
-  async getProjects(): Promise<string[]> {
-    return this.context.globalState.get("azureDevOpsProjects", []);
-  }
-} */
 
 class PipelinesProvider
   implements vscode.TreeDataProvider<Pipeline | SeparatorItem>
@@ -761,6 +437,137 @@ class PipelinesProvider
     );
   }
 
+  async openLogsInWebview(pipeline: Pipeline) {
+    const pat = await this.getPAT();
+    const orgUrl = await this.getOrgUrl();
+
+    if (!pat || !orgUrl) {
+      vscode.window.showErrorMessage("PAT or Organization URL is not set");
+      return;
+    }
+
+    // Create a new Webview panel
+    const panel = vscode.window.createWebviewPanel(
+      "pipelineLogs", // Internal identifier
+      `Logs: ${pipeline.label}`, // Title of the Webview
+      vscode.ViewColumn.One, // Show in the first column
+      {
+        enableScripts: true, // Allow JavaScript in the Webview
+      }
+    );
+
+    // Set initial content for the Webview
+    panel.webview.html = this.getWebviewContent("Loading logs...");
+
+    try {
+      const authHandler = azdev.getPersonalAccessTokenHandler(pat);
+      const connection = new azdev.WebApi(orgUrl, authHandler);
+      const buildApi = await connection.getBuildApi();
+
+      // Fetch logs for the pipeline
+      const logs = await buildApi.getBuildLogs(
+        pipeline.projectName,
+        pipeline.buildId
+      );
+
+      let logContent = "";
+
+      // Process each log
+      for (const log of logs) {
+        if (log.id !== undefined) {
+          const logLines = await buildApi.getBuildLogLines(
+            pipeline.projectName,
+            pipeline.buildId,
+            log.id
+          );
+          logContent += `<h3>Log ${log.id}</h3><pre>${logLines.join(
+            "\n"
+          )}</pre><hr>`;
+        }
+      }
+
+      // Update the Webview content with the fetched logs
+      panel.webview.html = this.getWebviewContent(logContent);
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        `Error fetching logs: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+      panel.webview.html = this.getWebviewContent(
+        `Error fetching logs: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+private getWebviewContent(logs: string): string {
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Pipeline Logs</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          margin: 0;
+          padding: 0;
+          background-color: #1e1e1e;
+          color: #d4d4d4;
+        }
+        header {
+          background-color: #007acc;
+          color: white;
+          padding: 10px;
+          text-align: center;
+          font-size: 1.5em;
+        }
+        .container {
+          padding: 20px;
+        }
+        .task {
+          margin-bottom: 20px;
+          border: 1px solid #3c3c3c;
+          border-radius: 5px;
+          overflow: hidden;
+        }
+        .task-header {
+          background-color: #252526;
+          color: #dcdcaa;
+          padding: 10px;
+          font-size: 1.2em;
+          font-weight: bold;
+        }
+        .task-content {
+          background-color: #1e1e1e;
+          padding: 10px;
+          white-space: pre-wrap; /* Wrap long lines */
+          word-wrap: break-word; /* Break long words */
+          overflow-x: auto;
+        }
+        .task-content::-webkit-scrollbar {
+          width: 8px;
+        }
+        .task-content::-webkit-scrollbar-thumb {
+          background: #007acc;
+          border-radius: 4px;
+        }
+        .task-content::-webkit-scrollbar-track {
+          background: #333;
+        }
+      </style>
+    </head>
+    <body>
+      <header>Pipeline Logs</header>
+      <div class="container">
+        ${logs}
+      </div>
+    </body>
+    </html>
+  `;
+}
+
   private async getPAT(): Promise<string | undefined> {
     return this.context.secrets.get("azureDevOpsPAT");
   }
@@ -862,6 +669,7 @@ class Pipeline extends vscode.TreeItem {
       title: "Open Logs",
       arguments: [this],
     };
+    this.contextValue = "pipeline"; // Add this line
   }
 
   private getIconPath(): vscode.ThemeIcon {
@@ -888,7 +696,7 @@ class SeparatorItem extends vscode.TreeItem {
     super(projectName, vscode.TreeItemCollapsibleState.None);
     this.iconPath = new vscode.ThemeIcon("project");
     this.description = `${"─".repeat(20)}`;
-    this.contextValue = "separator";
+    this.contextValue = "pipeline";
   }
 }
 

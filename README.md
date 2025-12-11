@@ -18,7 +18,7 @@ Azure DevOps - Pipeline Viewer is a Visual Studio Code extension that allows you
 - Auto-refresh to keep pipeline status up-to-date.
 - Visual separators with project names and icons for better organization.
 - Set and manage Azure DevOps Personal Access Token (PAT), organization URL, and project names.
-- View detailed logs for each pipeline run.
+- View detailed logs for each pipeline run in the Terminal or Webview with improved formatting and structure.
 - Highlight custom tasks in the log output for better visibility.
 - Progress indicator when fetching pipeline logs.
 
@@ -64,7 +64,10 @@ To view logs for a pipeline run:
 
 1. Click on a pipeline in the "Pipelines" view.
 2. The logs will open in the Output panel, showing detailed information about the pipeline run.
-3. Custom tasks in the logs are highlighted for easy identification.
+3. Alternatively, when you hover over a pipeline you can click on `View Pipeline Logs in Webview` to open the logs in a Webview. The Webview provides:
+   - Improved formatting with structured log levels (e.g., INFO, ERROR, DEBUG).
+   - Clear timestamps and color-coded log levels for better readability.
+   - Separation of logs by tasks with headers and horizontal lines.
 
 <br>
 
@@ -80,6 +83,7 @@ To view logs for a pipeline run:
 - **Remove Azure DevOps Project**: Remove an existing project.
 - **Reset Azure DevOps Secrets**: Reset all stored secrets (PAT, organization URL, projects).
 - **Refresh**: Manually refresh the pipeline view.
+- **View Logs in Webview**: Open pipeline logs in a Webview with enhanced formatting.
 
 ### Views
 
