@@ -1,7 +1,7 @@
 {
   "name": "azure-devops-pipeline-viewer",
   "displayName": "Azure DevOps - Pipeline Viewer",
-  "publisher": "Anonknowsit",
+  "publisher": "akit",
   "repository": {
     "type": "git",
     "url": "https://github.com/anonknowsit/ado-pipeline-viewer.git"
