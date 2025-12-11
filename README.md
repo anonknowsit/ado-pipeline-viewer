@@ -18,7 +18,7 @@ Azure DevOps - Pipeline Viewer is a Visual Studio Code extension that allows you
 - Auto-refresh to keep pipeline status up-to-date.
 - Visual separators with project names and icons for better organization.
 - Set and manage Azure DevOps Personal Access Token (PAT), organization URL, and project names.
-- View detailed logs for each pipeline run in the Terminal or Webview with improved formatting and structure.
+- View detailed logs for each pipeline run in the Terminal or in a Webview with improved formatting and structure.
 - Highlight custom tasks in the log output for better visibility.
 - Progress indicator when fetching pipeline logs.
 
